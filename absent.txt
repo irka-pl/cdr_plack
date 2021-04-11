@@ -1,5 +1,10 @@
 No api status messages and text explanations localization
 error gathering and showing - ?
-db
+db - wrapper
 test
 config
+about tabs
+perltidy
+resource configurations in the api modules
+global pager implementation for the api
+Data::Hal

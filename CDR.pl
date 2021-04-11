@@ -6,12 +6,12 @@ use Data::Dumper;
 
 use FindBin; 
 use lib ($FindBin::Bin, "$FindBin::Bin/lib", "$FindBin::Bin/local/lib/perl5");
-use Irka::API;
+use GhostFW;
  
 #my $app = Plack::App::CGIBin->new(root => "./bin")->to_app;
 my $app = sub { 
     my($env) = @_;
-    Irka::API->new()->to_app($env);
+    GhostFW->new($FindBin::Bin)->to_app($env);
 };
 
 builder {

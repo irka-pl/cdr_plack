@@ -1,9 +1,11 @@
 requires 'Class::Accessor';
 requires 'Data::Dumper';
 requires 'DBI';
+requires 'DBD::SQLite';
 requires 'FindBin'; 
 requires 'HTTP::Status'; 
 requires 'Log::Log4perl';
+requires 'Log::Log4perl::Appender::Screen';
 requires 'Module::Runtime';
 requires 'Plack';
 requires 'Plack::Builder';
