@@ -3,8 +3,9 @@ error gathering and showing - ?
 db - wrapper
 test
 config
-about tabs
+about tabs - (why leading tabs is good, but 4 space is standard, so we need to follow it)
 perltidy
 resource configurations in the api modules
 global pager implementation for the api
 Data::Hal
+pod documentation

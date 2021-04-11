@@ -14,6 +14,7 @@ my $app = sub {
     GhostFW->new($FindBin::Bin)->to_app($env);
 };
 
+#I have seen discussion about dynamic mount
 builder {
     mount "/" => $app;
 };
