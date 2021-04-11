@@ -1,0 +1,5 @@
+No api status messages and text explanations localization
+error gathering and showing - ?
+db
+test
+config

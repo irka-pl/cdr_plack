@@ -1,7 +1,12 @@
+requires 'Class::Accessor';
 requires 'Data::Dumper';
+requires 'DBI';
 requires 'FindBin'; 
+requires 'HTTP::Status'; 
+requires 'Log::Log4perl';
 requires 'Module::Runtime';
 requires 'Plack';
 requires 'Plack::Builder';
 requires 'Plack::Request';
 requires 'Plack::Response';
+requires 'Try::Tiny';
