@@ -40,7 +40,7 @@ sub get_rows {
     return $self->dbh->selectall_arrayref($sql, $attrs, @$bind_values);
 }
 
-sub get_rows {
+sub get_row {
     my ($self, $sql, $bind_values, $attrs) = @_;
     ($bind_values, $attrs) = $self->_prepare_args($bind_values, $attrs);
     $attrs->{Slice} = {};

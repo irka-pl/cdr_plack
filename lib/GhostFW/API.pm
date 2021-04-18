@@ -2,7 +2,7 @@ package GhostFW::API;
 
 use parent GhostFW::API::Base;
 
-sub get {
+sub GET {
     
 }
 

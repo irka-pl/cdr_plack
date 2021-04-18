@@ -7,12 +7,18 @@ use parent qw(Class::Accessor);
 
 use Plack::Request;
 use Plack::Response;
-use Data::Dumper;
-use Try::Tiny;
+
 use Log::Log4perl qw(get_logger :levels);
+#TODO: more general config, like any format loader?
+use Config::General;
+use HTTP::Request::Common;
 use HTTP::Status qw(:constants);
+
+use Data::Dumper;
 use FindBin; 
+use Try::Tiny;
 use Module::Runtime qw(use_module);
+
 
 __PACKAGE__->mk_ro_accessors( qw(logger) );
 
@@ -27,7 +33,8 @@ my $logger = Log::Log4perl->get_logger( get_api_vendor() );
 sub new{
     my ($class) = @_;
     my $data = {
-        logger   => $logger,
+        logger => $logger,
+        config => Config::General('/etc/ghostfw.conf'),
     };
     $logger->debug(Dumper(\@_));
     return bless $data, $class;
@@ -42,11 +49,9 @@ sub to_app {
     if ( my $resource = $self->load_path_api( $request, $response ) ) {
         $self->logger->debug("Resource created.");
         my $method_name = lc( $request->method );
-        my $method = $resource->can( $method_name );
-        $self->logger->debug("Method: $method_name.");
-        if ( $method ) {
-            $self->logger->debug("Method found.");
-            $resource->$method_name();
+        #TODO: resolve conflick of the "get" method and Class::Accessor and remove this handle_method
+        if ( $resource->handle_method($method_name) ) {
+            $self->logger->debug("Method found: $method_name.");
         } else {
             $self->error_not_found();
         }
@@ -82,6 +87,21 @@ sub load_path_api {
         $self->error_not_found($response);
     };
     return $object;
+}
+
+sub model {
+    my ($self, $model_name) = @_;
+    my $object;
+    #TODO: Config
+    my $module = join('::', $self->get_api_vendor, 'Model', $model_name);
+    try {
+        $self->logger->debug("Load module '$module'.");
+        $object = use_module($module)->new($self);
+    } catch {
+        $self->logger->error("Failed to load module '$module': $_;");
+        $self->error_not_found($response);
+    };
+    retun
 }
 
 sub error_not_found {

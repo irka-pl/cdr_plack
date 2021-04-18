@@ -11,4 +11,10 @@ sub POST {
     $self->response->status(200);
 }
 
+sub GET {
+    my($self) = @_;
+    $self->model();
+    $self->response->status(200);
+}
+
 1;

@@ -1,6 +1,7 @@
 No api status messages and text explanations localization
 error gathering and showing - ?
 db - wrapper
+data::validator or any other data validator
 test
 config
 about tabs - (why leading tabs is good, but 4 space is standard, so we need to follow it)
@@ -9,3 +10,4 @@ resource configurations in the api modules
 global pager implementation for the api
 Data::Hal
 pod documentation
+ssl
