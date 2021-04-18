@@ -3,7 +3,6 @@ package GhostFW::Model::Base;
 use parent qw(Class::Accessor);
 use Try::Tiny;
 use Module::Runtime qw(use_module);
-use GhostFW::DB;
 GhostFW::Utils qw/resource_from_classname/;
 
 __PACKAGE__->mk_ro_accessors( qw(app db logger) );
@@ -11,8 +10,9 @@ __PACKAGE__->mk_ro_accessors( qw(app db logger) );
 
 sub new {
     my ($class, $controller) = @_;
-    my $db = GhostFW::DB->new();
-
+    my $db_module_name = $class;
+    $db_module_name = s/::Model::([^:]+)$/::Model::DB::$1/;
+    my $resource = lc($1);
     try {
         $self->logger->debug("Load module '$db_module_name'.");
         $db = use_module($db_module_name)->new($self);

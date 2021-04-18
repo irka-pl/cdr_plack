@@ -1,13 +1,15 @@
-No api status messages and text explanations localization
+No api status messages and text localization
 error gathering and showing - ?
 db - wrapper
 data::validator or any other data validator
 test
-config
+config!!!
 about tabs - (why leading tabs is good, but 4 space is standard, so we need to follow it)
 perltidy
 resource configurations in the api modules
-global pager implementation for the api
+global pager implementation for the api and sql at all
 Data::Hal
 pod documentation
 ssl
+naming convention get/set (about get_resource_from_classname vs resource_from_classname)
+transactions and proper error messages [p 2]

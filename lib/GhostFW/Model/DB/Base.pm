@@ -30,19 +30,20 @@ sub new {
 }
 
 #parameter $where_in should contain AND | OR operator at the end, if it is not empty
-sub get_where{
+#binds parameter is mandatory
+sub get_where ($$$;$) {
     my($self, $params, $binds, $where_in) = @_;
     $params //= {};
     my @where;
-    $binds // {};
     #interesting fact about while - hash should be reset after each "each" loop, e.g. with keys call.
-    foreach  my $key (keys %{$params->{filter_eq}}) {
-        #TODO: check injection in $key
-        push @where, qq{$key = ?};
-        push @binds, $params->{filter_eq}->{};
+    foreach  my $field (keys %{$params->{filter_eq}}) {
+        #TODO: check injection in $field
+        push @where, qq{$field = ?};
+        push @$binds, $params->{filter_eq}->{};
     }
     $where_in //= @where ? ' WHERE ' : '';
     $where_in .= join(' AND ', @where);
+    #binds are changed implicitly 
     return $where_in;
 }
 
@@ -55,44 +56,77 @@ sub get_where{
 
 sub get_list{
     my($self, $params) = @_;
-    my $sql = 'select * from '.$self->table.$self->get_where($params);
-    return $self->db()->get_list($sql, );
+    my $binds = [];
+    my $sql = 'select * from '.$self->table.$self->get_where($params, $binds);
+    return $self->db()->get_list($sql, $binds);
 }
 
 sub get_item{
     my($self, $params) = @_;
-    return $self->db()->get_item('select * from '.$self->table.$self->get_where($params));
+    my $list = $self->get_list($params);
+    #TODO: throw warning if we have more than one row
+    return $list->[0];
 }
 
 sub get_item_by_id{
     my($self, $id) = @_;
-    return $self->db()->get_item('select * from '.$self->table.' WHERE '.$self->key.' = ? ');
+    my $list = $self->db()->get_list('select * from '.$self->table.' WHERE '.$self->key.' = ? ', [$id]);
+    #TODO: throw warning if we have more than one row
+    return $list->[0];
 }
 
 sub update_item{
-    my($self, $key, $data) = @_;
-    my $sql = 
-    return $self->db()->update_item('update '.$self->table.' set ');
+    my($self, $id, $data) = @_;
+    my $sql = 'update '.$self->table.' set ';
+    my $binds = [];
+    foreach my $field (keys %$data) {
+        $sql .= $field.' = ? ';
+        push @$binds, $data->{$field};
+    }
+    $sql .= ' WHERE '.$self->key.' = ? ';
+    push @$binds, $id;
+    return $self->db()->query($sql, $binds);
 }
 
 sub delete_item{
-    my($self, $key) = @_;
-    return $self->db()->delete_item($key);
+    my($self, $id) = @_;
+    my $sql = 'delete from '.$self->table.' where '.$self->key. ' = ?';
+    my $binds = [$id];
+    return $self->db()->query($sql, $binds);
 }
 
 sub delete_items{
-    my($self, $keys) = @_;
-    return $self->db()->delete_items($keys);
+    my($self, $ids) = @_;
+    my $sql = 'delete from '.$self->table.' where '
+        .$self->key. ' in ('.join('',('?') x scalar @$ids).')';
+    return $self->db()->query($sql, $ids);
 }
 
 sub create_item{
     my($self, $data) = @_;
-    return $self->db()->create_item($data);
+    my @fields = keys %$data;
+    my $sql = 'insert into '.$self->table.'('.join(',', @fields).') values '
+        .' ('.join(',', ('?') x scalar @fields).')';
+    my $binds = [@{$data}{@fields}];
+    return $self->db()->query($sql, $binds);
 }
 
 sub create_items{
-    my($self, $data) = @_;
-    return $self->db()->create_items($data);
+    my($self, $fields, $data) = @_;
+    my $bucket_size = 1000;
+    my $sql_start = 'insert into '.$self->table.'('.join(',', @$fields).') values ';
+    my $sql_values = '('.join(',', ('?') x scalar @$fields).')';
+    # if we want to send all-in-one
+    #    . join(',', ('('.join(',', ('?') x scalar @$fields).')') x scalar @$data );
+    my $i = 0;
+    do {
+        my $rows = ( $i + $bucket_size ) > @$data ? @$data - $i : $bucket_size;
+        my $data_end_index = $i + rows;
+        my $sql = $sql_start . join(',', ($sql_values) x $rows );
+        my $binds = [map {@{$_}} @$data[$i..$data_end_index]];
+        $self->db()->query($sql, $binds);
+    } while ($i < @$data);
+    #TODO: catch error and rollback transaction. Wrap ALL queries in one transaction.
 }
 
 

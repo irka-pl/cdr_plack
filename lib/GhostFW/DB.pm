@@ -33,14 +33,7 @@ sub query {
     return $self->dbh->do($sql, %$attrs, @$bind_values);
 }
 
-sub get_rows {
-    my ($self, $sql, $bind_values, $attrs) = @_;
-    ($bind_values, $attrs) = $self->_prepare_args($bind_values, $attrs);
-    $attrs->{Slice} = {};
-    return $self->dbh->selectall_arrayref($sql, $attrs, @$bind_values);
-}
-
-sub get_row {
+sub get_list {
     my ($self, $sql, $bind_values, $attrs) = @_;
     ($bind_values, $attrs) = $self->_prepare_args($bind_values, $attrs);
     $attrs->{Slice} = {};
