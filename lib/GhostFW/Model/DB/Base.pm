@@ -1,4 +1,7 @@
-package GhostFW::Model::Base;
+package GhostFW::Model::DB::Base;
+use strict;
+use warnings;
+
 
 use parent qw(Class::Accessor);
 use Try::Tiny;
@@ -6,27 +9,27 @@ use Module::Runtime qw(use_module);
 use GhostFW::DB;
 use GhostFW::Utils qw(resource_from_classname);
 
-__PACKAGE__->mk_accessors( qw(dbh logger table) );
-
+__PACKAGE__->mk_accessors( qw(db logger table) );
 
 sub new {
     my ($class, $model) = @_;
     my $db = GhostFW::DB->new;
     #TODO: config
-    my $table = $self->can('_table') 
-            ? $self->_table 
-            : $model->resource // resource_from_classname($class);
      my $data = {
         model  => $model,
         db     => $db,
         #shortcuts
         logger => $model->logger,
-        table  => $table,
         #TODO: define key field from the DB structure, or config
         key     => 'id',
     };
-    $app->logger->debug( "Creating new Resource Model DB $class.");
-    return bless $data, $class;
+    my $self = bless $data, $class;
+    my $table = $self->can('_table') 
+            ? $self->_table 
+            : lc($model->resource // resource_from_classname($class));
+    $self->table($table);
+    $model->logger->debug( "Creating new Resource Model DB $class.");
+    return $self;
 }
 
 #parameter $where_in should contain AND | OR operator at the end, if it is not empty
@@ -39,7 +42,7 @@ sub get_where ($$$;$) {
     foreach  my $field (keys %{$params->{filter_eq}}) {
         #TODO: check injection in $field
         push @where, qq{$field = ?};
-        push @$binds, $params->{filter_eq}->{};
+        push @$binds, $params->{filter_eq}->{$field};
     }
     $where_in //= @where ? ' WHERE ' : '';
     $where_in .= join(' AND ', @where);
@@ -121,7 +124,7 @@ sub create_items{
     my $i = 0;
     do {
         my $rows = ( $i + $bucket_size ) > @$data ? @$data - $i : $bucket_size;
-        my $data_end_index = $i + rows;
+        my $data_end_index = $i + $rows;
         my $sql = $sql_start . join(',', ($sql_values) x $rows );
         my $binds = [map {@{$_}} @$data[$i..$data_end_index]];
         $self->db()->query($sql, $binds);

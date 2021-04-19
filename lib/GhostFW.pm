@@ -34,7 +34,7 @@ sub new{
     my ($class) = @_;
     my $data = {
         logger => $logger,
-        config => Config::General('/etc/ghostfw.conf'),
+        #config => Config::General->new('/etc/ghostfw.conf'),
     };
     $logger->debug(Dumper(\@_));
     return bless $data, $class;
@@ -90,18 +90,23 @@ sub load_path_api {
 }
 
 sub model {
-    my ($self, $model_name) = @_;
+    my ($self, $model_name, $controller) = @_;
     my $object;
     #TODO: Config
     my $module = join('::', $self->get_api_vendor, 'Model', $model_name);
+    $self->logger->debug("controller '$controller'.");
     try {
         $self->logger->debug("Load module '$module'.");
-        $object = use_module($module)->new($self);
+        $object = use_module($module)->new($controller);
     } catch {
         $self->logger->error("Failed to load module '$module': $_;");
-        $self->error_not_found($response);
+        #TODO: Later it should be dedicated module Default.
+        $module = join('::', $self->get_api_vendor, 'Model', 'Base');
+        $self->logger->error("Attempt to load module '$module';");
+        $object = use_module($module)->new($controller);
+        #$self->error_not_found($response);
     };
-    retun
+    return $object;
 }
 
 sub error_not_found {

@@ -1,36 +1,42 @@
 package GhostFW::Model::Base;
+use strict;
+use warnings;
 
 use parent qw(Class::Accessor);
 use Try::Tiny;
 use Module::Runtime qw(use_module);
-GhostFW::Utils qw/resource_from_classname/;
+use GhostFW::Utils qw(resource_from_classname);
 
-__PACKAGE__->mk_ro_accessors( qw(app db logger) );
+__PACKAGE__->mk_ro_accessors( qw(logger controller) );
+__PACKAGE__->mk_accessors( qw(resource view db) );
 
 
 sub new {
     my ($class, $controller) = @_;
-    my $db_module_name = $class;
-    $db_module_name = s/::Model::([^:]+)$/::Model::DB::$1/;
-    my $resource = lc($1);
-    try {
-        $self->logger->debug("Load module '$db_module_name'.");
-        $db = use_module($db_module_name)->new($self);
-    } catch {
-        $self->logger->error("Failed to load module '$module': $_;");
-        $self->error_not_found($response);
-    };
     my $data = {
+        #TODO: weaken circular reference?
         controller => $controller,
-        db         => $db,
         #shortcuts
         logger     => $controller->logger,
-        resource   => $self->can('_resource') 
-            ? $self->_resource 
-            : $controller->resource // $resource;
+        view       => 'json',
     };
     #$app->logger->debug( "Creating new API Resource $class.");
-    return bless $data, $class;
+    my $self = bless $data, $class;
+    my $resource = $self->can('_resource') 
+            ? $self->_resource 
+            : $controller->resource // resource_from_classname($class);
+    $self->resource($resource);
+    my $db_module_name = $class;
+    $db_module_name =~ s/::Model::/::Model::DB::/;
+    try {
+        $self->logger->debug("Load module '$db_module_name'.");
+        my $db = use_module($db_module_name)->new($self);
+        $self->db($db);
+    } catch {
+        $self->logger->debug("Failed to load module '$db_module_name': $_;");
+        #todo: throw
+    };
+    return $self;
 }
 
 sub get_list{

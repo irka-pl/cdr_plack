@@ -5,8 +5,11 @@ use warnings;
 #conflicts with http method get
 use parent qw(Class::Accessor);
 use GhostFW::DB;
+use GhostFW::Utils qw(resource_from_classname);
 
-__PACKAGE__->mk_ro_accessors( qw(app request response logger resource) );
+__PACKAGE__->mk_ro_accessors( qw(app logger) );
+#TODO: Model read only
+__PACKAGE__->mk_accessors( qw(request response resource model) );
 
 sub new{
     my ($class, $app, $request, $response) = @_;
@@ -16,11 +19,17 @@ sub new{
         response => $response,
         #shortcut to app logger
         logger   => $app->logger,
-        #TODO: config
-        resource => undef,
     };
     $app->logger->debug( "Creating new API Resource $class.");
-    return bless $data, $class;
+    my $self = bless $data, $class;
+    #TODO: config
+    $self->resource($self->can('_resource') 
+        ? $self->_resource 
+        : resource_from_classname($class));
+    $app->logger->debug( 'Resource: '.$self->resource);
+    $self->model($app->model($self->resource, $self));
+
+    return $self;
 }
 
 sub handle_method {

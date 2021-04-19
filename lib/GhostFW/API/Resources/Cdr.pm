@@ -13,7 +13,7 @@ sub POST {
 
 sub GET {
     my($self) = @_;
-    $self->model();
+    my $data = $self->model()->get_list;
     $self->response->status(200);
 }
 

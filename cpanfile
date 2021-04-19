@@ -1,4 +1,5 @@
 requires 'Class::Accessor';
+requires 'Config::General';
 requires 'Data::Dumper';
 requires 'DBI';
 requires 'DBD::SQLite';
