@@ -99,7 +99,7 @@ sub model {
         $self->logger->debug("Load module '$module'.");
         $object = use_module($module)->new($controller);
     } catch {
-        $self->logger->error("Failed to load module '$module': $_;");
+        $self->logger->error("Failed to load module '$module' => use dafault;");
         #TODO: Later it should be dedicated module Default.
         $module = join('::', $self->get_api_vendor, 'Model', 'Base');
         $self->logger->error("Attempt to load module '$module';");

@@ -5,8 +5,15 @@ use warnings;
 use parent qw(GhostFW::API::Base);
 use Data::Dumper;
 
+my $CONFIG = {
+    POST => { 
+        'Uploads' => ['text/csv'],
+    },
+}
+
 sub POST {
     my($self) = @_;
+    
     $self->logger->debug( Dumper(['uploads', $self->request->uploads ]));
     $self->response->status(200);
 }

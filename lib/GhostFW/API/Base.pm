@@ -46,4 +46,9 @@ sub handle_method {
     $self->$method(@_);
 }
 
+sub base_POST {
+    #data validation here
+    
+}
+
 1;
