@@ -112,7 +112,7 @@ sub POST {
                         #todo: separate processing to a method too
                         # and we will have draft of the generic method for the line-by-line file processing
                         
-                        # We have start_date = 02.04.2021 and end-_time 00:10:00 and duration 1800
+                        # We have start_date = 02.04.2021 and end_time 00:10:00 and duration 1800
                         #1. we suppose that end is 02.04.2021 00:10:00
                         my $end_date_time_approx = DateTime::Format::Flexible->parse_datetime(
                             $data_row->{call_date}.' '.$data_row->{end_time},
@@ -121,9 +121,7 @@ sub POST {
                         #2. but we get start_date = 01.04.2021 23:40:00, date is incorrect
                         my $start_date_time_approx = $end_date_time_approx->subtract(seconds => $data_row->{duration});
                         #2.1. if we had other data, and call started and ended in the same day, as we supposed:
-                        $start_date_time_approx->ymd;
-                        $data_row_processed->{call_date}->ymd ;
-                        if ($start_date_time_approx->ymd eq $data_row_processed->{call_date}->ymd ) {
+                       if ($start_date_time_approx->ymd eq $data_row_processed->{call_date}->ymd ) {
                             $data_row->{start_date_time} = $start_date_time_approx;
                             $data_row->{end_date_time} = $end_date_time_approx;
                         } else {
