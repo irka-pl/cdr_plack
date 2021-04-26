@@ -4,7 +4,7 @@ use warnings;
 use Plack::Builder;
 use Data::Dumper;
 
-use FindBin; 
+use FindBin;
 use lib ($FindBin::Bin, "$FindBin::Bin/lib", "$FindBin::Bin/local/lib/perl5");
 use GhostFW;
  

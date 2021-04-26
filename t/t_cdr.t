@@ -19,6 +19,7 @@ diag("Test GET");
     my $req = HTTP::Request->new('GET', $uri);
     my $request_time = time;
     my $res = $ua->request($req);
+    print Dumper($res);
     $request_time = time() - $request_time;
 }
 
@@ -28,7 +29,7 @@ diag("Test POST");
         #Content_Type => 'multipart/form-data',
         Content_Type => 'form-data',
         Content => {
-            file => ["$FindBin::Bin/data/techtest_cdr.csv"]
+            file => ["$FindBin::Bin/data/techtest_cdr_small.csv"]
         };
     my $res = $ua->request($req);
     print Dumper($res);

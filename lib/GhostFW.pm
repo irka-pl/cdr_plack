@@ -104,14 +104,12 @@ sub model {
         $module = join('::', $self->get_api_vendor, 'Model', 'Base');
         $self->logger->error("Attempt to load module '$module';");
         $object = use_module($module)->new($controller);
-        #$self->error_not_found($response);
     };
     return $object;
 }
 
 sub error_not_found {
     my ($self, $response) = @_;
-    $self->logger->debug("Not found;");
     $response->status(HTTP_NOT_FOUND);
     $response->body('');
 }

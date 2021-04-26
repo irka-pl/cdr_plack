@@ -4,24 +4,35 @@ use warnings;
 
 
 use parent qw(Class::Accessor);
+
 use Try::Tiny;
 use Module::Runtime qw(use_module);
 use GhostFW::DB;
 use GhostFW::Utils qw(resource_from_classname);
+use FindBin;
+use Data::Dumper;
+use feature 'state';
 
 __PACKAGE__->mk_accessors( qw(db logger table) );
 
+#TODO: Config
+
+
 sub new {
     my ($class, $model) = @_;
-    my $db = GhostFW::DB->new;
     #TODO: config
-     my $data = {
+    state $db = GhostFW::DB->new({
+        dbfile          => "$FindBin::Bin/data/store/db.sql",
+        create_sql_file => "$FindBin::Bin/data/init/001.sql",
+        logger          => $model->logger,
+    });
+    my $data = {
         model  => $model,
         db     => $db,
         #shortcuts
         logger => $model->logger,
         #TODO: define key field from the DB structure, or config
-        key     => 'id',
+        key    => 'id',
     };
     my $self = bless $data, $class;
     my $table = $self->can('_table') 
@@ -66,9 +77,9 @@ sub get_list{
 
 sub get_item{
     my($self, $params) = @_;
-    my $list = $self->get_list($params);
+    my $item = $self->get_item($params);
     #TODO: throw warning if we have more than one row
-    return $list->[0];
+    return $item;
 }
 
 sub get_item_by_id{
@@ -91,14 +102,14 @@ sub update_item{
     return $self->db()->query($sql, $binds);
 }
 
-sub delete_item{
+sub delete_item_by_id{
     my($self, $id) = @_;
     my $sql = 'delete from '.$self->table.' where '.$self->key. ' = ?';
     my $binds = [$id];
     return $self->db()->query($sql, $binds);
 }
 
-sub delete_items{
+sub delete_items_by_ids{
     my($self, $ids) = @_;
     my $sql = 'delete from '.$self->table.' where '
         .$self->key. ' in ('.join('',('?') x scalar @$ids).')';
@@ -111,6 +122,7 @@ sub create_item{
     my $sql = 'insert into '.$self->table.'('.join(',', @fields).') values '
         .' ('.join(',', ('?') x scalar @fields).')';
     my $binds = [@{$data}{@fields}];
+    $self->logger->debug(Dumper([$data, $sql, $binds]));
     return $self->db()->query($sql, $binds);
 }
 
