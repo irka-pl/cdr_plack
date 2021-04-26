@@ -6,6 +6,9 @@ use warnings;
 use parent qw(Class::Accessor);
 use GhostFW::DB;
 use GhostFW::Utils qw(resource_from_classname);
+#todo: check plack middleware to convert on the flight
+use JSON;
+
 
 __PACKAGE__->mk_ro_accessors( qw(app logger config) );
 #TODO: Model read only
@@ -55,34 +58,42 @@ sub handle_method {
     my $self = shift;
     my($method) = @_;
     $method = uc($method);
-    unless($self->can($method)) {
+    my $method_base = 'base_'.$method;
+    unless($self->can($method) || $self->can($method_base)) {
         return;
     }
-    my $method_base = 'base_'.$method;
     if ( $self->can($method_base) ) {
         $self->$method_base(@_);
     }
-    $self->$method(@_);
+    if ( $self->can($method) ) {
+        $self->$method(@_);
+    }
+    return 1;
 }
 
 sub base_POST {
     #data validation here
 }
 
+sub base_GET {
+    my($self) = @_;
+    my $filter = $self->get_filter_from_params;
+    my $data = $self->model()->get_list($filter);
+    #todo: repetition: look at the plack middlewares for output postprocessing
+    $self->response->body(encode_json ($data));
+    $self->response->status(200);
+}
+
 sub get_filter_from_params {
     my ($self) = shift;
-    my $params = $self->request->params;
+    my $params = $self->request->parameters;
     my $filter = {};
     foreach my $filter_param (keys %{$params} ) {
         my $filter_field = $filter_param;
         if ($filter_field =~ s/^filter_//) {
             #op examples: eq, le, ge, lt, gt, in, like, period
-            (my($op,$field)) = $filter_field =~ /(^[^_]+)_(.*?)/;
-            if ($filter->{$field}->{$op}) {
-                push @{$filter->{$field}->{$op}}, $params->{$filter_param};
-            } else {
-                $filter->{$field}->{$op} = $params->{$filter_param};
-            }
+            (my($op,$field)) = ( $filter_field =~ /(^[^_]+)_(.*)$/ );
+            $filter->{$field}->{$op} = [$self->request->parameters->get_all($filter_param)];
         }
     }
     return $filter;

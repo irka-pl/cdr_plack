@@ -158,13 +158,6 @@ sub POST {
     $self->response->status(200);
 }
 
-sub GET {
-    my($self) = @_;
-    my $data = $self->model()->get_list;
-    #todo: repetition: look at the plack middlewares for output postprocessing
-    $self->response->body(encode_json ($data));
-    $self->response->status(200);
-}
 
 #------aux
 

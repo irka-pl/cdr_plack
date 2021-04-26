@@ -53,7 +53,7 @@ sub to_app {
         if ( $resource->handle_method($method_name) ) {
             $self->logger->debug("Method found: $method_name.");
         } else {
-            $self->error_not_found();
+            $self->error_not_found($response);
         }
     }
     if(!$response->status){

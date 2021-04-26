@@ -11,7 +11,10 @@ use GhostFW::DB;
 use GhostFW::Utils qw(resource_from_classname);
 use FindBin;
 use Data::Dumper;
+use DateTime::Format::Flexible;
+use DateTime;
 use feature 'state';
+
 
 __PACKAGE__->mk_accessors( qw(db logger table) );
 
@@ -46,17 +49,46 @@ sub new {
 #parameter $where_in should contain AND | OR operator at the end, if it is not empty
 #binds parameter is mandatory
 sub get_where ($$$;$) {
-    my($self, $params, $binds, $where_in) = @_;
-    $params //= {};
-    my @where;
-    #interesting fact about while - hash should be reset after each "each" loop, e.g. with keys call.
-    foreach  my $field (keys %{$params->{filter_eq}}) {
+    my($self, $filter, $binds, $where_in) = @_;
+    $filter //= {};
+    my (@wheres_and);
+    foreach my $field (keys %{$filter}) {
+        my @wheres_or;
+        my $field_filter = $filter->{$field};
         #TODO: check injection in $field
-        push @where, qq{$field = ?};
-        push @$binds, $params->{filter_eq}->{$field};
+        foreach my $op (keys %{$field_filter}) {
+            my $values = $field_filter->{$op};
+            if ($op eq 'eq') {
+                if (@{$values} > 1) {
+                    push @wheres_or, $field .' IN ('.join(',', ('?') x scalar @{$values}).')';
+                } elsif (scalar @{$values} == 1) {
+                    push @wheres_or, $field .' = '.$values->[0].'';
+                }
+                push @$binds, @{$values};            
+            } elsif ($op eq 'like') {
+                if ( @{$values} ) {
+                    push @wheres_or, $field.' LIKE '.join(' OR '.$field.' LIKE ',('?') x scalar @{$values} );
+                    push @$binds, @{$values};
+                }
+            } elsif ($op eq 'period') {
+                if (scalar @{$values} == 2) {
+                    my @values_dt = map {my $v = DateTime::Format::Flexible->parse_datetime($_); $v ? $v : () } @{$values};
+                    if( scalar @values_dt == 2 ) {
+                        push @wheres_or, $field.' BETWEEN ? AND ?';
+                        push @$binds, sort { DateTime->compare_ignore_floating( $a, $b ) } @values_dt;
+                    } else {
+                        #todo - is_numeric, otherwise use string comparison
+                    }
+                }
+            }
+        }#we went through all operators for the field
+        #now we can join collected @wheres_or by 'AND'
+        if (@wheres_or) {
+            push @wheres_and, '('.join(' OR ', @wheres_or).')';
+        }
     }
-    $where_in //= @where ? ' WHERE ' : '';
-    $where_in .= join(' AND ', @where);
+    $where_in //= @wheres_and ? ' WHERE ' : '';
+    $where_in .= join(' AND ', @wheres_and);
     #binds are changed implicitly 
     return $where_in;
 }
@@ -69,9 +101,10 @@ sub get_where ($$$;$) {
 #In more complex cases it is better to construct sql manually
 
 sub get_list{
-    my($self, $params) = @_;
+    my($self, $filter) = @_;
     my $binds = [];
-    my $sql = 'select * from '.$self->table.$self->get_where($params, $binds);
+    my $sql = 'select * from '.$self->table.$self->get_where($filter, $binds);
+    $self->logger->debug("sql=$sql;".Dumper($filter));
     return $self->db()->get_list($sql, $binds);
 }
 
@@ -122,7 +155,7 @@ sub create_item{
     my $sql = 'insert into '.$self->table.'('.join(',', @fields).') values '
         .' ('.join(',', ('?') x scalar @fields).')';
     my $binds = [@{$data}{@fields}];
-    $self->logger->debug(Dumper([$data, $sql, $binds]));
+    #$self->logger->debug(Dumper([$data, $sql, $binds]));
     return $self->db()->query($sql, $binds);
 }
 

@@ -40,8 +40,8 @@ sub new {
 }
 
 sub get_list{
-    my($self) = @_;
-    return $self->db()->get_list();
+    my($self, $filter) = @_;
+    return $self->db()->get_list($filter);
 }
 
 sub get_item{

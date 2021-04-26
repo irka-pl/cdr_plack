@@ -16,7 +16,7 @@ my $uri = 'http://192.168.56.101:3001/api/cdr';
 
 diag("Test GET");
 {
-    my $req = HTTP::Request->new('GET', $uri);
+    my $req = HTTP::Request->new('GET', $uri.'/?filter_period_start_date_time=2016-01-01T00:00:00&filter_period_start_date_time=2017-01-01T00:00:00&filter_like_reference=C5DA97%');
     my $request_time = time;
     my $res = $ua->request($req);
     print Dumper($res);
