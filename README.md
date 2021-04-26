@@ -30,7 +30,7 @@ I decided to don't use any ready framework. As the most close to the test task n
 
 I wanted to avoid ORM using to keep application small. I reimplemented ideas from my old (2005) web framework with very basic sql generation, that could be replaced by the manually written sql for more complex cases. I remember that simple filter & sorting & paging sql generation covered > 80 needs of the usual web applications, and allowed to keep code base small.
 
-Now application uses primitive validation, from the method located right in the API interface module. This should change in the future. Validation should be separated. When I was working with Data::Validator, I always was sorry about data, once collected for the validation purposes, that weren't used for the further data processing. And I want to construct data validation so results of the validation processing could be reused.
+Now application uses primitive validation, from the method located right in the API interface module. This should change in the future. Validation should be separated and use some library solution, probably input::validate. When I was working with Data::Validator, I always was sorry about data, once collected for the validation purposes, that weren't used for the further data processing. And I want to construct data validation so results of the validation processing could be reused.
 
 There are some SQLite specific code presented in the generic methods, it also should be separated.
 
