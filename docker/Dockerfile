@@ -1,3 +1,20 @@
+# Make sure the Docker container has access to the outside Internet
+# in order to gather packages from CPAN.
+
+ARG workdir=/usr/src/app
+FROM perl:latest AS perl-base
+ARG workdir
+
+WORKDIR ${workdir}
+
+# upgrade cpanm and install Carton
+RUN cpanm --self-upgrade --notest --quiet \
+    && cpanm Carton --notest --quiet \
+    && mkdir /carton \
+    && rm -fr /root/.cpanm /tmp/*
+
+#   Docker
+
 #
 # No need to write `carton exec` because of the following:
 
@@ -27,4 +44,4 @@ COPY /docker/start-psgi.sh /start.sh
 RUN chmod +x /*.sh
 
 #ENTRYPOINT ["bash","start-dev.sh"]
-#ENTRYPOINT ["bash","ls"]
+ENTRYPOINT ["perl ","start-dev.sh"]
