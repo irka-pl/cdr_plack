@@ -8,6 +8,9 @@ docker build -t cdr-perl-web --file docker/Dockerfile .
 
 docker run -p 127.0.0.1:3001:3001 cdr-perl-web sh /usr/src/app/start-dev.sh
 
+Test script loads test csv file from the path {ROOT}/t/data/techtest_cdr.csv
+I didn't put test csv to the repo, as wasn't sure that it doesn't contain private data.
+
 C:\My\My\cdr_plack>perl t/t_cdr.t
 Test GET
 time=0;
