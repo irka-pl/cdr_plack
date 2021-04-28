@@ -8,6 +8,7 @@ use Data::Dumper;
 use HTTP::Status qw(:constants);
 #todo: check plack middleware to convert on the flight
 use JSON;
+use feature 'state';
 
 #validation and preprocessing
 #TODO: DateTime::Format::Builder provides more flexible way
@@ -195,14 +196,25 @@ sub validate_data {
         reference => qr{[A-Z0-9]{33}},
         currency  => $parse_currency,
     };
+    state $cache = {};
+    my $use_cache = { map {$_ => 1} qw/call_date currency/ };
+
+    FIELDS_VALIDATION:
     foreach my $field (keys %{$row}) {
+        my $result;
+        if ($use_cache->{$field} && exists $cache->{$field}->{$row->{$field}}) {
+            if ($cache->{$field}->{$row->{$field}}) {
+                $row_preprocessed->{$field} = $cache->{$field}->{$row->{$field}};
+            }
+            next FIELDS_VALIDATION;
+        }
         if (my $rule = $validator_config->{$field}) {
             if( is_regexpref( $rule ) ) {
                 if ( ! $row->{$field} =~ $rule ) {
                     $errors->{$field} = "Field '$field' didn't match format pattern '$rule'.";
                 }
             } elsif ( is_coderef( $rule ) ) {
-                my $result = $rule->($row->{$field});
+                $result = $rule->($row->{$field});
                 #$self->logger->debug("processing result: $result;");
                 if (!$result) {
                     $errors->{$field} = "Field '$field' didn't pass checking method.";
@@ -210,6 +222,9 @@ sub validate_data {
                     $row_preprocessed->{$field} = $result;
                 }
             }
+        }
+        if (!$errors->{$field}) {
+            $cache->{$field}->{$row->{$field}} = $result;
         }
     }
     return ( (scalar keys %{$errors} ? $errors : undef), $row_preprocessed );
