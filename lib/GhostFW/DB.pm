@@ -82,7 +82,7 @@ sub query {
     ($bind_values, $attrs) = $self->_prepare_args($bind_values, $attrs);
     #$self->logger->debug(Dumper([$sql, $attrs, $bind_values]));
     my $result = $self->dbh->do($sql, $attrs, @$bind_values);
-    $self->logger->debug("do result: $result");
+    #$self->logger->debug("do result: $result");
     return $result;
 }
 

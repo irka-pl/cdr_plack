@@ -19,5 +19,6 @@ requires 'Plack';
 requires 'Plack::Builder';
 requires 'Plack::Request';
 requires 'Plack::Response';
+requires 'Plack::Runner';
 requires 'Ref::Util';
 requires 'Try::Tiny';

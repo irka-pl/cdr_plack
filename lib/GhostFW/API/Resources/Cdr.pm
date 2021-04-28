@@ -203,7 +203,7 @@ sub validate_data {
                 }
             } elsif ( is_coderef( $rule ) ) {
                 my $result = $rule->($row->{$field});
-                $self->logger->debug("processing result: $result;");
+                #$self->logger->debug("processing result: $result;");
                 if (!$result) {
                     $errors->{$field} = "Field '$field' didn't pass checking method.";
                 } else {

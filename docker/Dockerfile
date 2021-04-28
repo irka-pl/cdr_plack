@@ -18,30 +18,34 @@ RUN cpanm --self-upgrade --notest --quiet \
 #
 # No need to write `carton exec` because of the following:
 
-ENV PERL5LIB=\$PERL5LIB:${perllibs} PERL_CARTON_PATH=/carton
-ENV PATH "$PATH:/usr/bin"
+ENV PERL5LIB=\$PERL5LIB:/carton/lib/perl5 PERL_CARTON_PATH=/carton
+ENV PATH "$PATH:/usr/bin:/carton/bin"
 
 #we don't need local, .git, docker
+RUN mkdir -p ./data/init \
+    && chmod +rx ./data/init
+
 COPY cpanfile ./
-COPY data ./
-COPY etc ./
-COPY lib ./
-COPY t ./
+COPY data/init/ ./data/init/
+COPY etc/ ./etc/
+COPY lib/ ./lib/
+COPY t/ ./t/
+COPY psgi.pl ./
 
 RUN carton install \
     && rm -rf /root/.cpanm
 
-RUN mkdir -p /data/store \
-    && chmod +rx /data/store
+RUN mkdir -p ./data/store \
+    && chmod +rx ./data/store
 
 #########
 
 FROM perl-base AS cdr-perl-web
 ARG workdir
 
-COPY /docker/start-psgi-dev.sh /start-dev.sh
-COPY /docker/start-psgi.sh /start.sh
-RUN chmod +x /*.sh
+COPY /docker/start-psgi-dev.sh ./start-dev.sh
+COPY /docker/start-psgi.sh ./start.sh
+RUN chmod +x ./*.sh
 
 #ENTRYPOINT ["bash","start-dev.sh"]
-ENTRYPOINT ["perl ","start-dev.sh"]
+#ENTRYPOINT ["sh", "/usr/src/app/start-dev.sh"]
