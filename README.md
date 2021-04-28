@@ -29,6 +29,8 @@ time=40;
 
 Upload time is definitely too long. To improve this we can use some ways:
 
+* Low lwvwl fruit, will implement today - cache date and currency processing results, as most of the values will be the same in one file.
+
 * Make uploads asynchronous. On upload we will return "SUCCESS" (HTTP_CODE 200), in case if file was uploaded and we could recognize columns or confirm format in the first line, if there wasn't header line. We will create unique id and return it to the client. Later he can request info about his upload by this unique id. We need to care about saving information about failed lines.
  Processing should be passed to some queue manager.
 
