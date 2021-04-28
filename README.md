@@ -26,12 +26,13 @@ time=40;
 
 Upload time is definitely too long. To improve this we can use some ways:
 
-* Make uploads asynchronous. On upload we will return "SUCCESS" (HTTP_CODE 200), in case if file was uploaded and we could recognize columns or confirm format in the first line, if there wasn't header line. We create unique id and return it to the client. Later he can request info about his upload by this unique id. We need to care about saving information about failed lines.
+* Make uploads asynchronous. On upload we will return "SUCCESS" (HTTP_CODE 200), in case if file was uploaded and we could recognize columns or confirm format in the first line, if there wasn't header line. We will create unique id and return it to the client. Later he can request info about his upload by this unique id. We need to care about saving information about failed lines.
+ Processing should be passed to some queue manager.
 
-* Independently, if we will use asynchronous interface or not, we may try to split processing of the big file to N chunks using "seek". Here we will need to care about splitting file by lines, we will need to find line endings and adjust "seek" position at the start and end of the each piece. I would like to try use set of the threads to process these pieces in parallel, or just use usual forked processes. 
+* Independently, if we will use asynchronous interface or not, we may try to split processing of the big file to N chunks using "seek". Here we will need to care about splitting file by lines, we will need to find line endings and adjust "seek" position at the start and end of the each piece. I would like to try to use set of the threads to process these pieces in parallel, or just use usual forked processes.
  Bottleneck for this parallel processing could be the database. Of course we can use temporary tables and merge their results at the end, but still insertion into result table could be a narrow place.
  
- * Also first thing I would try to improve the speed, at least just in sake of curiosity, it would be multiple inserts sql syntax, but here is the risk, that duplicated line may break insertion of the multiple lines and we will need to process this failed set line-by-line after that.
+ * Also first thing I would try to improve the speed, at least just in sake of curiosity, would be multiple inserts sql syntax, but here is the risk, that duplicated line may break insertion of the multiple lines and we will need to process this failed set line-by-line after that.
 
 #### Further improvemnts
 
